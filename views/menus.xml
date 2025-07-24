@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <menuitem
+            id="menu_agriculture_root"
+            name="Kənd Təsərrüfatı"
+            web_icon="agriculture,static/description/icon.png"
+            sequence="10"/>
+
+        <menuitem
+            id="menu_agriculture_master_data"
+            name="Əsas Məlumatlar"
+            parent="menu_agriculture_root"
+            sequence="1"/>
+
+        <!-- Məhsullar Menyusu -->
+        <menuitem
+            id="menu_agriculture_products"
+            name="Məhsullar"
+            parent="menu_agriculture_root"
+            sequence="2"/>
+
+        <!-- Məhsullar Action və Menyu -->
+        <record id="action_agriculture_product" model="ir.actions.act_window">
+            <field name="name">Məhsullar</field>
+            <field name="res_model">product.product</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="context">{
+                'search_default_filter_to_sell': 1,
+                'default_detailed_type': 'product'
+            }</field>
+        </record>
+
+        <menuitem
+            id="menu_agriculture_product"
+            name="Məhsullar"
+            parent="menu_agriculture_products"
+            action="action_agriculture_product"
+            sequence="10"/>
+
+        <!-- Sahələr Action və Menyu -->
+        <record id="action_agriculture_plot" model="ir.actions.act_window">
+            <field name="name">Sahələr</field>
+            <field name="res_model">agriculture.plot</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem
+            id="menu_agriculture_plot"
+            name="Sahələr"
+            parent="menu_agriculture_master_data"
+            action="action_agriculture_plot"
+            sequence="10"/>
+
+        <!-- Cərgələr Action və Menyu -->
+        <record id="action_agriculture_row" model="ir.actions.act_window">
+            <field name="name">Cərgələr</field>
+            <field name="res_model">agriculture.row</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        
+        <menuitem
+            id="menu_agriculture_row"
+            name="Cərgələr"
+            parent="menu_agriculture_master_data"
+            action="action_agriculture_row"
+            sequence="20"/>
+
+        <!-- Ağaclar Action və Menyu -->
+        <record id="action_agriculture_tree" model="ir.actions.act_window">
+            <field name="name">Ağaclar</field>
+            <field name="res_model">agriculture.tree</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        
+        <menuitem
+            id="menu_agriculture_tree"
+            name="Ağaclar"
+            parent="menu_agriculture_master_data"
+            action="action_agriculture_tree"
+            sequence="30"/>
+
+        <!-- Toplu Cərgə Yaratma Action və Menyu -->
+        <record id="action_bulk_row_creator" model="ir.actions.act_window">
+            <field name="name">Toplu Cərgə Yaratma</field>
+            <field name="res_model">agriculture.bulk.row.creator</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem
+            id="menu_bulk_row_creator"
+            name="Toplu Cərgə Yaratma"
+            parent="menu_agriculture_master_data"
+            action="action_bulk_row_creator"
+            sequence="35"/>
+
+        <!-- İşçilər Menyusu -->
+        <menuitem
+            id="menu_agriculture_workers"
+            name="İşçilər"
+            parent="menu_agriculture_root"
+            sequence="3"/>
+
+        <!-- İşçilər Action və Menyu -->
+        <record id="action_agriculture_worker" model="ir.actions.act_window">
+            <field name="name">İşçilər</field>
+            <field name="res_model">agriculture.worker</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem
+            id="menu_agriculture_worker"
+            name="İşçilər"
+            parent="menu_agriculture_workers"
+            action="action_agriculture_worker"
+            sequence="10"/>
+
+        <!-- İşçi Ödənişləri Action və Menyu -->
+        <record id="action_agriculture_worker_payment" model="ir.actions.act_window">
+            <field name="name">İşçi Ödənişləri</field>
+            <field name="res_model">agriculture.worker.payment</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem
+            id="menu_agriculture_worker_payment"
+            name="İşçi Ödənişləri"
+            parent="menu_agriculture_workers"
+            action="action_agriculture_worker_payment"
+            sequence="20"/>
+
+        <!-- Əməliyyatlar Menyusu -->
+        <menuitem
+            id="menu_agriculture_operations"
+            name="Əməliyyatlar"
+            parent="menu_agriculture_root"
+            sequence="4"/>
+
+        <!-- Əməliyyatlar Action və Menyu -->
+        <record id="action_agriculture_operation" model="ir.actions.act_window">
+            <field name="name">Əməliyyatlar</field>
+            <field name="res_model">agriculture.operation</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem
+            id="menu_agriculture_operation"
+            name="Əməliyyatlar"
+            parent="menu_agriculture_operations"
+            action="action_agriculture_operation"
+            sequence="10"/>
+
+        <!-- Əməliyyat Növləri Action və Menyu -->
+        <record id="action_agriculture_operation_type" model="ir.actions.act_window">
+            <field name="name">Əməliyyat Növləri</field>
+            <field name="res_model">agriculture.operation.type</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem
+            id="menu_agriculture_operation_type"
+            name="Əməliyyat Növləri"
+            parent="menu_agriculture_operations"
+            action="action_agriculture_operation_type"
+            sequence="20"/>
+
+        <!-- Hesabatlar Menyusu -->
+        <menuitem
+            id="menu_agriculture_reports"
+            name="Hesabatlar"
+            parent="menu_agriculture_root"
+            sequence="5"/>
+
+        <!-- Pivot Menularını Saxla -->
+        <menuitem
+            id="menu_agriculture_operation_pivot"
+            name="Əməliyyat Hesabatı"
+            parent="menu_agriculture_reports"
+            action="action_agriculture_operation_pivot"
+            sequence="10"/>
+
+        <menuitem
+            id="menu_agriculture_worker_payment_pivot"
+            name="İşçi Ödəniş Hesabatı"
+            parent="menu_agriculture_reports"
+            action="action_agriculture_worker_payment_pivot"
+            sequence="20"/>
+
+        <data noupdate="1">
+            <record id="seq_agriculture_tree" model="ir.sequence">
+                <field name="name">Ağac Kodu</field>
+                <field name="code">agriculture.tree</field>
+                <field name="prefix">AĞAC-</field>
+                <field name="padding">5</field>
+            </record>
+        </data>
+    </data>
+</odoo>
