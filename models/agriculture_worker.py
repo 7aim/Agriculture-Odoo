@@ -72,6 +72,7 @@ class AgricultureWorkerPayment(models.Model):
 
     name = fields.Char(string="Ödəniş", compute='_compute_name', store=True)
     worker_id = fields.Many2one('agriculture.worker', string="İşçi", required=True, ondelete='cascade')
+    operation_id = fields.Many2one('agriculture.operation', string="Əməliyyat", ondelete='set null', help="Bu ödəniş hansı əməliyyat üçün")
     date = fields.Date(string="Ödəniş Tarixi", required=True, default=fields.Date.context_today)
     amount = fields.Monetary(string="Məbləğ", required=True, currency_field='currency_id')
     currency_id = fields.Many2one('res.currency', string="Valyuta", default=lambda self: self.env.company.currency_id)
@@ -92,11 +93,12 @@ class AgricultureWorkerPayment(models.Model):
         ('cancelled', 'Ləğv edilmiş')
     ], string="Status", default='draft', required=True)
 
-    @api.depends('worker_id', 'date', 'amount')
+    @api.depends('worker_id', 'date', 'amount', 'operation_id')
     def _compute_name(self):
         for payment in self:
             if payment.worker_id and payment.date:
-                payment.name = f"{payment.worker_id.name} - {payment.date.strftime('%Y-%m-%d')} - {payment.amount} AZN"
+                operation_part = f" ({payment.operation_id.name})" if payment.operation_id else ""
+                payment.name = f"{payment.worker_id.name} - {payment.date.strftime('%Y-%m-%d')} - {payment.amount} AZN{operation_part}"
             else:
                 payment.name = "Yeni Ödəniş"
 

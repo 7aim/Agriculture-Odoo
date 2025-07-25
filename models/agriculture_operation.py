@@ -137,6 +137,13 @@ class AgricultureOperation(models.Model):
             else:
                 rec.name = "Yeni Əməliyyat"
 
+    @api.depends('product_line_ids.cost', 'worker_cost')
+    def _compute_total_cost(self):
+        """Ümumi xərci hesabla"""
+        for operation in self:
+            product_cost = sum(line.cost for line in operation.product_line_ids)
+            operation.total_cost = product_cost + operation.worker_cost
+
     def action_done(self):
         """Əməliyyatı tamamla və məhsul miqdarlarını azalt"""
         for operation in self:
@@ -190,24 +197,23 @@ class AgricultureOperation(models.Model):
             _logger.error(f"Product quantity reduction error: {str(e)}")
     
     def _create_worker_expenses(self):
-        """İşçi xərclərini işçi hesabatına əlavə et"""
+        """İşçi xərclərini işçi ödənişinə əlavə et"""
         if not self.worker_ids or self.worker_cost <= 0:
             return
             
-        # Hər işçi üçün xərc yaradırıq
+        # Hər işçi üçün ödəniş yaradırıq
         worker_count = len(self.worker_ids)
         cost_per_worker = self.worker_cost / worker_count
         
         for worker in self.worker_ids:
-            # İşçi üçün operation expense yaradırıq  
-            self.env['agriculture.worker.expense'].create({
+            # İşçi üçün payment yaradırıq  
+            self.env['agriculture.worker.payment'].create({
                 'worker_id': worker.id,
-                'operation_id': self.id,
                 'date': self.date.date() if self.date else fields.Date.context_today(self),
                 'amount': cost_per_worker,
-                'description': f"{self.operation_type_id.name} əməliyyatı üçün iş haqqı",
-                'expense_type': 'salary',
-                'state': 'confirmed'
+                'description': f"{self.operation_type_id.name} əməliyyatı üçün iş haqqı (Əməliyyat: {self.name})",
+                'payment_type': 'salary',
+                'state': 'draft'  # İlk olaraq qaralama vəziyyətində
             })
     def action_cancel(self):
         """Əməliyyatı ləğv et"""

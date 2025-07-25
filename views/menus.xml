@@ -140,14 +140,6 @@
             action="action_agriculture_operation_type"
             sequence="20"/>
 
-        <!-- Məhsullar Menyusu -->
-        <menuitem
-            id="menu_agriculture_product"
-            name="Məhsullar"
-            parent="menu_agriculture_root"
-            action="action_agriculture_product"
-            sequence="5"/>
-
         <!-- Məhsullar Action və Menyu -->
         <record id="action_agriculture_product" model="ir.actions.act_window">
             <field name="name">Məhsullar</field>
@@ -158,6 +150,14 @@
                 'default_detailed_type': 'product'
             }</field>
         </record>
+
+        <!-- Məhsullar Menyusu -->
+        <menuitem
+            id="menu_agriculture_product"
+            name="Məhsullar"
+            parent="menu_agriculture_root"
+            action="action_agriculture_product"
+            sequence="5"/>
 
         <!-- Hesabatlar Menyusu -->
         <menuitem
@@ -181,13 +181,5 @@
             action="action_agriculture_worker_payment_pivot"
             sequence="20"/>
 
-        <data noupdate="1">
-            <record id="seq_agriculture_tree" model="ir.sequence">
-                <field name="name">Ağac Kodu</field>
-                <field name="code">agriculture.tree</field>
-                <field name="prefix">AĞAC-</field>
-                <field name="padding">5</field>
-            </record>
-        </data>
     </data>
 </odoo>

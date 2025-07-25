@@ -21,7 +21,26 @@ class AgricultureTree(models.Model):
     # Ağac nömrəsi
     @api.model_create_multi
     def create(self, vals_list):
+        # Cərgə üzrə ağac sayını hesablayırıq
+        row_counters = {}
+        
         for vals in vals_list:
             if vals.get('name', 'Yeni') == 'Yeni':
-                vals['name'] = self.env['ir.sequence'].next_by_code('agriculture.tree') or 'Yeni'
+                row_id = vals.get('row_id')
+                if row_id:
+                    row = self.env['agriculture.row'].browse(row_id)
+                    if row:
+                        # Bu cərgə üçün counter varsa istifadə et, yoxsa başla
+                        if row_id not in row_counters:
+                            # Bu cərgədə neçə ağac var?
+                            existing_count = self.search_count([('row_id', '=', row_id)])
+                            row_counters[row_id] = existing_count
+                        
+                        # Counter artır və ağac kodu yarat
+                        row_counters[row_id] += 1
+                        vals['name'] = f"{row.name} A{row_counters[row_id]}"
+                    else:
+                        vals['name'] = self.env['ir.sequence'].next_by_code('agriculture.tree') or 'Yeni'
+                else:
+                    vals['name'] = self.env['ir.sequence'].next_by_code('agriculture.tree') or 'Yeni'
         return super().create(vals_list)
