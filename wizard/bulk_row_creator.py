@@ -17,7 +17,6 @@ class BulkRowCreator(models.TransientModel):
     product_id = fields.Many2one('product.template', string="Ağac Növü", 
                                 domain="[('categ_id.name', 'ilike', 'mehsul')]",
                                 help="Hansı növ ağacdır (məhsul kateqoriyasından)")
-    tree_variety = fields.Char(string="Növ Detalı", default="Qızıləhmədi", help="Məs: Qızıləhmədi, Ağəhmədi")
     plant_date = fields.Date(string="Əkilmə Tarixi", default=fields.Date.context_today)
 
     @api.depends('row_count', 'trees_per_row')
@@ -55,7 +54,7 @@ class BulkRowCreator(models.TransientModel):
             for j in range(1, self.trees_per_row + 1):
                 tree_vals = {
                     'row_id': row.id,
-                    'variety': self.tree_variety,
+                    'variety': self.product_id.name if self.product_id else '',
                     'plant_date': self.plant_date,
                     'state': 'young',
                 }

@@ -89,7 +89,6 @@
                 <header>
                 <!-- Əməliyyatın vəziyyəti -->
                     <button name="action_done" string="Tamamla" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_create_purchase_order" string="Sifariş Yarat" type="object" class="btn-secondary" invisible="state != 'draft'"/>
                     <button name="action_cancel" string="Ləğv Et" type="object" confirm="Bu əməliyyatı ləğv etmək istədiyinizdən əminsiniz?" invisible="state not in ['draft']"/>
                     <button name="action_draft" string="Qaralama" type="object" invisible="state not in ['done', 'cancelled']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,done"/>

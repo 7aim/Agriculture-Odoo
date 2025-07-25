@@ -19,7 +19,6 @@
                             <field name="use_plot_code"/>
                             <field name="row_prefix" placeholder="Məs: A, B, C..." invisible="not use_plot_code"/>
                             <field name="product_id" options="{'no_create_edit': True}"/>
-                            <field name="tree_variety"/>
                             <field name="plant_date"/>
                         </group>
                     </group>
