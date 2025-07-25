@@ -48,6 +48,21 @@ class AgricultureOperation(models.Model):
 
     notes = fields.Text(string="Qeydlər")
 
+    product_line_ids = fields.One2many('agriculture.operation.line', 'operation_id', string="Məhsul Xərcləri")
+    total_cost = fields.Monetary(string="Ümumi Xərc", compute='_compute_total_cost', store=True, currency_field='currency_id')
+    currency_id = fields.Many2one('res.currency', string="Valyuta", default=lambda self: self.env.company.currency_id)
+
+    @api.model
+    def create(self, vals):
+        """Yeni əməliyyat yaradılanda"""
+        operation = super().create(vals)
+        
+        # Worker cost daxil edilibsə və işçilər seçilibsə, payment yarat
+        if operation.worker_cost and operation.worker_cost > 0 and operation.worker_ids:
+            operation._create_worker_expenses()
+            
+        return operation
+
     @api.depends('row_ids', 'product_line_ids.product_qty', 'product_line_ids.product_id')
     def _compute_tree_stats(self):
         for operation in self:
@@ -61,12 +76,6 @@ class AgricultureOperation(models.Model):
         if self.operation_type_id:
             # Mövcud məhsul xətlərini təmizlə
             self.product_line_ids = [(5, 0, 0)]
-
-
-    product_line_ids = fields.One2many('agriculture.operation.line', 'operation_id', string="Məhsul Xərcləri")
-    total_cost = fields.Monetary(string="Ümumi Xərc", compute='_compute_total_cost', store=True, currency_field='currency_id')
-    currency_id = fields.Many2one('res.currency', string="Valyuta", default=lambda self: self.env.company.currency_id)
-
 
     @api.depends('operation_type_id', 'date')
     def _compute_name(self):
@@ -107,7 +116,7 @@ class AgricultureOperation(models.Model):
         return True
         
     def _reduce_product_qty(self, product, qty):
-        """Məhsul miqdarını birbaşa azalt - sadə metod"""
+        """Məhsul miqdarını birbaşa azalt"""
         try:
             # Stock quant tapırıq və birbaşa azaldırıq
             quants = self.env['stock.quant'].search([
@@ -155,24 +164,6 @@ class AgricultureOperation(models.Model):
                 'payment_type': 'salary',
                 'state': 'draft'  # İlk olaraq qaralama vəziyyətində
             })
-    def action_cancel(self):
-        """Əməliyyatı ləğv et"""
-        self.write({'state': 'cancelled'})
-        
-    def action_draft(self):
-        """Əməliyyatı qaralama vəziyyətinə qaytar"""
-        self.write({'state': 'draft'})
-    
-    @api.model
-    def create(self, vals):
-        """Yeni əməliyyat yaradılanda"""
-        operation = super().create(vals)
-        
-        # Worker cost daxil edilibsə və işçilər seçilibsə, payment yarat
-        if operation.worker_cost and operation.worker_cost > 0 and operation.worker_ids:
-            operation._create_worker_expenses()
-            
-        return operation
 
     def write(self, vals):
         """Əməliyyat yenilənəndə"""
@@ -204,9 +195,17 @@ class AgricultureOperation(models.Model):
                     record._create_worker_expenses()
         
         return res
+    
+    def action_cancel(self):
+        """Əməliyyatı ləğv et"""
+        self.write({'state': 'cancelled'})
         
+    def action_draft(self):
+        """Əməliyyatı qaralama vəziyyətinə qaytar"""
+        self.write({'state': 'draft'})
+        
+    """
     def action_create_purchase_order(self):
-        """Lazım olan məhsullar üçün Purchase Order yarat"""
         purchase_lines = []
         
         for line in self.product_line_ids:
@@ -268,7 +267,7 @@ class AgricultureOperation(models.Model):
                     'type': 'info',
                 }
             }
-
+    """
 
 class AgricultureOperationLine(models.Model):
     _name = 'agriculture.operation.line'
@@ -312,39 +311,3 @@ class AgricultureOperationLine(models.Model):
                               f'Əməliyyatı tamamlamaq üçün əlavə məhsul sifariş etməli olacaqsınız.'
                 }
             }
-
-
-class AgricultureOperationExpense(models.Model):
-    _name = 'agriculture.operation.expense'
-    _description = 'Əməliyyat Əlavə Xərcləri'
-    _order = 'date desc, id desc'
-
-    operation_id = fields.Many2one('agriculture.operation', string="Əməliyyat", ondelete='cascade', required=True)
-    date = fields.Date(string="Tarix", required=True, default=fields.Date.context_today)
-    
-    expense_type = fields.Selection([
-        ('fuel', 'Yanacaq (Benzin/Dizel)'),
-        ('tools', 'Alətlər və Avadanlıq'),
-        ('transport', 'Nəqliyyat'),
-        ('maintenance', 'Texniki Xidmət'),
-        ('electricity', 'Elektrik Enerjisi'),
-        ('water', 'Su'),
-        ('other', 'Digər')
-    ], string="Xərc Növü", required=True, default='other')
-    
-    description = fields.Char(string="Açıqlama", required=True)
-    amount = fields.Monetary(string="Məbləğ", required=True, currency_field='currency_id')
-    currency_id = fields.Many2one('res.currency', related='operation_id.currency_id')
-    
-    # Əlavə detallar
-    quantity = fields.Float(string="Miqdar", help="Məsələn: yanacaq litri, alət sayı və s.")
-    unit_price = fields.Float(string="Vahid Qiyməti", help="Bir vahidin qiyməti")
-    supplier = fields.Char(string="Təchizatçı", help="Haradan alınıb")
-    
-    notes = fields.Text(string="Qeydlər")
-
-    @api.onchange('quantity', 'unit_price')
-    def _onchange_quantity_price(self):
-        """Miqdar və vahid qiyməti dəyişəndə məbləği avtomatik hesabla"""
-        if self.quantity and self.unit_price:
-            self.amount = self.quantity * self.unit_price
