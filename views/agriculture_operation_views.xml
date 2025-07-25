@@ -183,12 +183,6 @@
                                 <field name="worker_cost"/>
                             </group>
                         </page>
-                        <page string="Elave xərclər" name="additional_costs">
-                            <group>
-                                <field name="additional_category" options="{'no_create_edit': True}"/>
-                                <field name="additional_cost" widget="monetary" currency_field="currency_id"/>
-                            </group>
-                        </page>
                         <page string="Qeydlər">
                             <field name="notes" placeholder="Əməliyyat haqqında əlavə məlumatlar..."/>
                         </page>

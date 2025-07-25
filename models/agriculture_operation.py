@@ -51,10 +51,6 @@ class AgricultureOperation(models.Model):
     worker_ids = fields.Many2many('agriculture.worker', string="İşçilər")
     worker_cost = fields.Monetary(string="İşçi Xərcləri", compute='_compute_worker_cost', store=True, currency_field='currency_id')
 
-    # Əlavə xərclər
-    additional_expense_ids = fields.One2many('agriculture.operation.expense', 'operation_id', string="Əlavə Xərclər")
-    total_additional_cost = fields.Monetary(string="Ümumi Əlavə Xərc", compute='_compute_total_additional_cost', store=True, currency_field='currency_id')
-    
     # Ağac sayı və ağac başına hesablamalar
     total_trees = fields.Integer(string="Ümumi Ağac Sayı", compute='_compute_tree_stats', store=True)
     fertilizer_per_tree = fields.Float(string="Ağac Başına Gübrə (kg)", compute='_compute_tree_stats', store=True)
@@ -114,12 +110,6 @@ class AgricultureOperation(models.Model):
             else:
                 operation.fertilizer_per_tree = 0.0
 
-    @api.depends('additional_expense_ids.amount')
-    def _compute_total_additional_cost(self):
-        """Əlavə xərclərinin ümumi məbləğini hesabla"""
-        for operation in self:
-            operation.total_additional_cost = sum(expense.amount for expense in operation.additional_expense_ids)
-
     @api.depends('worker_ids', 'worker_ids.daily_wage')
     def _compute_worker_cost(self):
         """İşçi xərclərini hesabla"""
@@ -146,12 +136,6 @@ class AgricultureOperation(models.Model):
                 rec.name = f"{rec.operation_type_id.name} - {rec.date.strftime('%Y-%m-%d %H:%M')}"
             else:
                 rec.name = "Yeni Əməliyyat"
-    
-    @api.depends('product_line_ids.cost', 'worker_cost', 'total_additional_cost')
-    def _compute_total_cost(self):
-        for operation in self:
-            product_cost = sum(line.cost for line in operation.product_line_ids)
-            operation.total_cost = product_cost + operation.worker_cost + operation.total_additional_cost
 
     def action_done(self):
         """Əməliyyatı tamamla və məhsul miqdarlarını azalt"""
