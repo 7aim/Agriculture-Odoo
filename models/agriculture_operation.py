@@ -50,6 +50,10 @@ class AgricultureOperation(models.Model):
     # İşçi məlumatları
     worker_ids = fields.Many2many('agriculture.worker', string="İşçilər")
     worker_cost = fields.Monetary(string="İşçi Xərcləri", compute='_compute_worker_cost', store=True, currency_field='currency_id')
+
+    # Əlavə xərclər
+    additional_expense_ids = fields.One2many('agriculture.operation.expense', 'operation_id', string="Əlavə Xərclər")
+    total_additional_cost = fields.Monetary(string="Ümumi Əlavə Xərc", compute='_compute_total_additional_cost', store=True, currency_field='currency_id')
     
     # Ağac sayı və ağac başına hesablamalar
     total_trees = fields.Integer(string="Ümumi Ağac Sayı", compute='_compute_tree_stats', store=True)
@@ -110,6 +114,12 @@ class AgricultureOperation(models.Model):
             else:
                 operation.fertilizer_per_tree = 0.0
 
+    @api.depends('additional_expense_ids.amount')
+    def _compute_total_additional_cost(self):
+        """Əlavə xərclərinin ümumi məbləğini hesabla"""
+        for operation in self:
+            operation.total_additional_cost = sum(expense.amount for expense in operation.additional_expense_ids)
+
     @api.depends('worker_ids', 'worker_ids.daily_wage')
     def _compute_worker_cost(self):
         """İşçi xərclərini hesabla"""
@@ -137,11 +147,11 @@ class AgricultureOperation(models.Model):
             else:
                 rec.name = "Yeni Əməliyyat"
     
-    @api.depends('product_line_ids.cost', 'worker_cost')
+    @api.depends('product_line_ids.cost', 'worker_cost', 'total_additional_cost')
     def _compute_total_cost(self):
         for operation in self:
             product_cost = sum(line.cost for line in operation.product_line_ids)
-            operation.total_cost = product_cost + operation.worker_cost
+            operation.total_cost = product_cost + operation.worker_cost + operation.total_additional_cost
 
     def action_done(self):
         """Əməliyyatı tamamla və məhsul miqdarlarını azalt"""
@@ -158,6 +168,9 @@ class AgricultureOperation(models.Model):
                     elif current_qty > 0:
                         # Mövcud olanı azalt
                         operation._reduce_product_qty(line.product_id, current_qty)
+            
+            # İşçi xərclərini işçi hesabatına əlavə et
+            operation._create_worker_expenses()
         
         # Status-u done et
         self.write({'state': 'done'})
@@ -191,6 +204,27 @@ class AgricultureOperation(models.Model):
             import logging
             _logger = logging.getLogger(__name__)
             _logger.error(f"Product quantity reduction error: {str(e)}")
+    
+    def _create_worker_expenses(self):
+        """İşçi xərclərini işçi hesabatına əlavə et"""
+        if not self.worker_ids or self.worker_cost <= 0:
+            return
+            
+        # Hər işçi üçün xərc yaradırıq
+        worker_count = len(self.worker_ids)
+        cost_per_worker = self.worker_cost / worker_count
+        
+        for worker in self.worker_ids:
+            # İşçi üçün operation expense yaradırıq  
+            self.env['agriculture.worker.expense'].create({
+                'worker_id': worker.id,
+                'operation_id': self.id,
+                'date': self.date.date() if self.date else fields.Date.context_today(self),
+                'amount': cost_per_worker,
+                'description': f"{self.operation_type_id.name} əməliyyatı üçün iş haqqı",
+                'expense_type': 'salary',
+                'state': 'confirmed'
+            })
     def action_cancel(self):
         """Əməliyyatı ləğv et"""
         self.write({'state': 'cancelled'})
@@ -306,3 +340,39 @@ class AgricultureOperationLine(models.Model):
                               f'Əməliyyatı tamamlamaq üçün əlavə məhsul sifariş etməli olacaqsınız.'
                 }
             }
+
+
+class AgricultureOperationExpense(models.Model):
+    _name = 'agriculture.operation.expense'
+    _description = 'Əməliyyat Əlavə Xərcləri'
+    _order = 'date desc, id desc'
+
+    operation_id = fields.Many2one('agriculture.operation', string="Əməliyyat", ondelete='cascade', required=True)
+    date = fields.Date(string="Tarix", required=True, default=fields.Date.context_today)
+    
+    expense_type = fields.Selection([
+        ('fuel', 'Yanacaq (Benzin/Dizel)'),
+        ('tools', 'Alətlər və Avadanlıq'),
+        ('transport', 'Nəqliyyat'),
+        ('maintenance', 'Texniki Xidmət'),
+        ('electricity', 'Elektrik Enerjisi'),
+        ('water', 'Su'),
+        ('other', 'Digər')
+    ], string="Xərc Növü", required=True, default='other')
+    
+    description = fields.Char(string="Açıqlama", required=True)
+    amount = fields.Monetary(string="Məbləğ", required=True, currency_field='currency_id')
+    currency_id = fields.Many2one('res.currency', related='operation_id.currency_id')
+    
+    # Əlavə detallar
+    quantity = fields.Float(string="Miqdar", help="Məsələn: yanacaq litri, alət sayı və s.")
+    unit_price = fields.Float(string="Vahid Qiyməti", help="Bir vahidin qiyməti")
+    supplier = fields.Char(string="Təchizatçı", help="Haradan alınıb")
+    
+    notes = fields.Text(string="Qeydlər")
+
+    @api.onchange('quantity', 'unit_price')
+    def _onchange_quantity_price(self):
+        """Miqdar və vahid qiyməti dəyişəndə məbləği avtomatik hesabla"""
+        if self.quantity and self.unit_price:
+            self.amount = self.quantity * self.unit_price
