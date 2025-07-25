@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from odoo import models, fields, api
 
 class AgricultureOperationType(models.Model):
@@ -46,41 +45,6 @@ class AgricultureOperation(models.Model):
 
     # Ağac sayı və ağac başına hesablamalar
     total_trees = fields.Integer(string="Ümumi Ağac Sayı", compute='_compute_tree_stats', store=True)
-    fertilizer_per_tree = fields.Float(string="Ağac Başına Gübrə (kg)", compute='_compute_tree_stats', store=True)
-
-    # Suvarma əməliyyatları üçün
-    water_amount = fields.Float(string="Su Miqdarı (L)", help="Suvarmada istifadə edilən su miqdarı")
-    irrigation_duration = fields.Float(string="Suvarma Müddəti (saat)", help="Suvarma əməliyyatının müddəti")
-    irrigation_method = fields.Selection([
-        ('drip', 'Damcı Suvarma'),
-        ('sprinkler', 'Çiləyici'),
-        ('flood', 'Daşqın Suvarma'),
-        ('manual', 'Əl ilə'),
-        ('other', 'Digər')
-    ], string="Suvarma Metodu")
-
-    # Müalicə əməliyyatları üçün
-    treatment_target = fields.Selection([
-        ('pest', 'Zərərverici'),
-        ('disease', 'Xəstəlik'),
-        ('weed', 'Alaq otu'),
-        ('nutrition', 'Qida çatışmazlığı'),
-        ('other', 'Digər')
-    ], string="Müalicə Hədəfi")
-    dosage_per_tree = fields.Float(string="Ağac Başına Dozaj (ml/qr)", help="Hər ağac üçün tətbiq edilən dozaj")
-
-    # Məhsul yığımı üçün
-    harvest_weight = fields.Float(string="Yığılmış Məhsul Çəkisi (kq)", help="Yığılmış məhsulun ümumi çəkisi")
-    harvest_quality = fields.Selection([
-        ('excellent', 'Əla'),
-        ('good', 'Yaxşı'),
-        ('average', 'Orta'),
-        ('poor', 'Zəif')
-    ], string="Məhsul Keyfiyyəti")
-
-    # Əkmə/tikinti üçün
-    planted_variety = fields.Char(string="Əkilən Növ", help="Əkilən bitki və ya ağac növü")
-    planting_density = fields.Float(string="Əkmə Sıxlığı", help="Hər sahə vahidi üçün bitki sayı")
 
     notes = fields.Text(string="Qeydlər")
 
@@ -90,18 +54,6 @@ class AgricultureOperation(models.Model):
             # Seçilmiş cərgələrdəki ümumi ağac sayı
             total_trees = sum(row.tree_count for row in operation.row_ids)
             operation.total_trees = total_trees
-            
-            # Gübrə məhsullarının ümumi miqdarı
-            fertilizer_qty = sum(
-                line.product_qty for line in operation.product_line_ids 
-                if line.product_id and 'gübrə' in line.product_id.name.lower()
-            )
-            
-            # Ağac başına gübrə hesabla
-            if total_trees > 0 and fertilizer_qty > 0:
-                operation.fertilizer_per_tree = fertilizer_qty / total_trees
-            else:
-                operation.fertilizer_per_tree = 0.0
 
     @api.onchange('operation_type_id')
     def _onchange_operation_type_id(self):

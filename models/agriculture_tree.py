@@ -9,8 +9,11 @@ class AgricultureTree(models.Model):
     row_id = fields.Many2one('agriculture.row', string="Aid Olduğu Cərgə", required=True, ondelete='cascade')
     plot_id = fields.Many2one('agriculture.plot', string="Aid Olduğu Sahə", related='row_id.plot_id', store=True, readonly=True)
     
+    # Ağac növü məhsul kateqoriyasından seçilir
+    product_id = fields.Many2one('product.template', string="Ağac Növü", 
+        domain="[('categ_id.name', 'ilike', 'mehsul')]")
+    
     plant_date = fields.Date(string="Əkilmə Tarixi")
-    variety = fields.Char(string="Növü (Məs: Qızıləhmədi)")
     state = fields.Selection([
         ('young', 'Cavan'),
         ('productive', 'Məhsuldar'),

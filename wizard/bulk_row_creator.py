@@ -14,7 +14,10 @@ class BulkRowCreator(models.TransientModel):
     use_plot_code = fields.Boolean(string="Sahə Kodunu İstifadə Et", default=True)
     
     # Ağac məlumatları
-    tree_variety = fields.Char(string="Ağac Növü", default="Qızıləhmədi")
+    product_id = fields.Many2one('product.template', string="Ağac Növü", 
+                                domain="[('categ_id.name', 'ilike', 'mehsul')]",
+                                help="Hansı növ ağacdır (məhsul kateqoriyasından)")
+    tree_variety = fields.Char(string="Növ Detalı", default="Qızıləhmədi", help="Məs: Qızıləhmədi, Ağəhmədi")
     plant_date = fields.Date(string="Əkilmə Tarixi", default=fields.Date.context_today)
 
     @api.depends('row_count', 'trees_per_row')
@@ -50,12 +53,15 @@ class BulkRowCreator(models.TransientModel):
             # Həmin cərgə üçün ağaclar yarat
             trees_to_create = []
             for j in range(1, self.trees_per_row + 1):
-                trees_to_create.append({
+                tree_vals = {
                     'row_id': row.id,
                     'variety': self.tree_variety,
                     'plant_date': self.plant_date,
                     'state': 'young',
-                })
+                }
+                if self.product_id:
+                    tree_vals['product_id'] = self.product_id.id
+                trees_to_create.append(tree_vals)
             
             # Toplu ağac yaratma
             if trees_to_create:
