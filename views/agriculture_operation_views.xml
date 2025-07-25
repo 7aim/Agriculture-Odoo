@@ -6,7 +6,6 @@
         <field name="arch" type="xml">
             <list string="Əməliyyat Növləri">
                 <field name="name"/>
-                <field name="category"/>
             </list>
         </field>
     </record>
@@ -19,7 +18,6 @@
                 <sheet>
                     <group>
                         <field name="name"/>
-                        <field name="category"/>
                     </group>
                 </sheet>
             </form>
@@ -36,6 +34,7 @@
         <field name="name">agriculture.operation.search</field>
         <field name="model">agriculture.operation</field>
         <field name="arch" type="xml">
+        <!--Filterlər və Axtarış-->
             <search string="Əməliyyatları Axtar">
                 <field name="name" string="Əməliyyat"/>
                 <field name="operation_type_id" string="Əməliyyat Növü"/>
@@ -90,6 +89,7 @@
         <field name="arch" type="xml">
             <form string="Əməliyyat">
                 <header>
+                <!-- Əməliyyatın vəziyyəti -->
                     <button name="action_done" string="Tamamla" type="object" class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_create_purchase_order" string="Sifariş Yarat" type="object" class="btn-secondary" invisible="state != 'draft'"/>
                     <button name="action_cancel" string="Ləğv Et" type="object" confirm="Bu əməliyyatı ləğv etmək istədiyinizdən əminsiniz?" invisible="state not in ['draft']"/>
@@ -118,7 +118,7 @@
                         </group>
                     </group>
 
-                    <!-- GÜBRƏLƏMƏ əməliyyatları üçün xüsusi sahələr -->
+                <!-- GÜBRƏLƏMƏ əməliyyatları üçün xüsusi sahələr -->
                     <group string="Gübrələmə Məlumatları" invisible="operation_category != 'nutrition'">
                         <group>
                             <field name="operation_category" invisible="1"/>
@@ -126,7 +126,7 @@
                         </group>
                     </group>
 
-                    <!-- SUVARMA əməliyyatları üçün xüsusi sahələr -->
+                <!-- SUVARMA əməliyyatları üçün xüsusi sahələr -->
                     <group string="Suvarma Məlumatları" invisible="operation_category != 'irrigation'">
                         <group>
                             <field name="water_amount"/>
@@ -137,7 +137,7 @@
                         </group>
                     </group>
 
-                    <!-- MÜALİCƏ əməliyyatları üçün xüsusi sahələr -->
+                <!-- MÜALİCƏ əməliyyatları üçün xüsusi sahələr -->
                     <group string="Müalicə Məlumatları" invisible="operation_category != 'treatment'">
                         <group>
                             <field name="treatment_target"/>
@@ -145,7 +145,7 @@
                         </group>
                     </group>
 
-                    <!-- MƏHSUL YIĞIMI üçün xüsusi sahələr -->
+                <!-- MƏHSUL YIĞIMI üçün xüsusi sahələr -->
                     <group string="Məhsul Yığımı Məlumatları" invisible="operation_category != 'harvesting'">
                         <group>
                             <field name="harvest_weight"/>
@@ -153,14 +153,14 @@
                         </group>
                     </group>
 
-                    <!-- ƏKMƏ/TİKİNTİ üçün xüsusi sahələr -->
+                <!-- ƏKMƏ/TİKİNTİ üçün xüsusi sahələr -->
                     <group string="Əkmə Məlumatları" invisible="operation_category != 'planting'">
                         <group>
                             <field name="planted_variety"/>
                             <field name="planting_density"/>
                         </group>
                     </group>
-
+                <!-- ƏMƏLİYYAT XƏRC MƏLUMATLARI -->
                     <notebook>
                         <page string="Məhsul Xərcləri" name="product_costs">
                             <field name="product_line_ids">

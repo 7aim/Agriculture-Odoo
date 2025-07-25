@@ -8,10 +8,9 @@
             <list string="İşçilər">
                 <field name="name"/>
                 <field name="phone"/>
-                <field name="daily_wage"/>
                 <field name="total_operations"/>
                 <field name="total_payments"/>
-                <field name="state" widget="badge" decoration-success="state == 'active'" decoration-muted="state == 'terminated'" decoration-warning="state == 'inactive'"/>
+                <field name="state" widget="badge" decoration-success="state == 'active'" decoration-muted="state == 'terminated'"/>
             </list>
         </field>
     </record>
@@ -25,7 +24,9 @@
                 <header>
                     <button name="action_view_operations" string="Əməliyyatlar" type="object" class="btn-primary"/>
                     <button name="action_view_payments" string="Ödənişlər" type="object" class="btn-secondary"/>
-                    <field name="state" widget="statusbar" statusbar_visible="active,inactive,terminated"/>
+                    <button name="action_terminate_worker" string="İşdən Çıxar" type="object" class="btn-danger" invisible="state != 'active'"/>
+                    <button name="action_reactivate_worker" string="Yenidən Aktiv Et" type="object" class="btn-success" invisible="state != 'terminated'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="active,terminated"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -36,13 +37,11 @@
                     <group>
                         <group>
                             <field name="phone"/>
-                            <field name="daily_wage"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                         <group>
                             <field name="start_date"/>
                             <field name="end_date"/>
-                            <field name="active"/>
                         </group>
                     </group>
                     <group string="Statistika">

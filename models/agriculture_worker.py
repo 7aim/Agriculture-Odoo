@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from odoo import models, fields, api
 
 # Kənd Təsərrüfatı İşçisi
@@ -6,21 +5,22 @@ class AgricultureWorker(models.Model):
     _name = 'agriculture.worker'
     _description = 'Kənd Təsərrüfatı İşçisi'
     _order = 'name'
+    
+    # Silinməni tamamilə qadağan et
+    _auto_archive = False
 
     name = fields.Char(string="İşçi Adı", required=True)
     phone = fields.Char(string="Telefon")
-    daily_wage = fields.Monetary(string="Günlük Maaş", currency_field='currency_id', required=True)
     currency_id = fields.Many2one('res.currency', string="Valyuta", default=lambda self: self.env.company.currency_id)
     
     # Başlanğıc və bitiş tarixləri
     start_date = fields.Date(string="İşə Başlama Tarixi", default=fields.Date.context_today)
     end_date = fields.Date(string="İşdən Çıxma Tarixi")
     
-    active = fields.Boolean(string="Aktiv", default=True)
+    # Active sahəsini tamamilə silək
     state = fields.Selection([
         ('active', 'Aktiv'),
-        ('inactive', 'Qeyri-aktiv'),
-        ('terminated', 'İşdən çıxarılmış')
+        ('terminated', 'İşdən Çıxarılmış'),
     ], string="Status", default='active', required=True)
     
     # Hesabat sahələri
@@ -30,17 +30,44 @@ class AgricultureWorker(models.Model):
     # Qeydlər
     notes = fields.Text(string="Qeydlər")
 
-    @api.depends('daily_wage')
+    @api.depends('name')
     def _compute_stats(self):
         """İşçi statistikalarını hesabla"""
         for worker in self:
-            # Əməliyyat sayı və qazanc
+            # Əməliyyat sayı - işçinin iştirak etdiyi tamamlanmış əməliyyatlar
             operations = self.env['agriculture.operation'].search([('worker_ids', 'in', worker.id), ('state', '=', 'done')])
             worker.total_operations = len(operations)
             
-            # Ödənilmiş məbləğ
-            payments = self.env['agriculture.worker.payment'].search([('worker_id', '=', worker.id), ('state', '=', 'paid')])
-            worker.total_payments = sum(payment.amount for payment in payments)
+            # Ödənilmiş məbləğ hesablama:
+            total_amount = 0
+            
+            # 1. Əməliyyatlardan gələn məbləğlər
+            for operation in operations:
+                # Əvvəlcə bu əməliyyat üçün payment olub-olmadığını yoxla
+                existing_payment = self.env['agriculture.worker.payment'].search([
+                    ('worker_id', '=', worker.id),
+                    ('operation_id', '=', operation.id),
+                    ('state', '=', 'paid')
+                ], limit=1)
+                
+                if existing_payment:
+                    # Payment varsa onu hesabla
+                    total_amount += existing_payment.amount
+                elif operation.worker_cost and operation.worker_cost > 0:
+                    # Payment yoxdursa worker_cost-u işçilər arasında böl
+                    worker_count = len(operation.worker_ids)
+                    if worker_count > 0:
+                        total_amount += operation.worker_cost / worker_count
+            
+            # 2. Əməliyyatla əlaqəsi olmayan digər ödənişlər (maaş, bonus və s.)
+            other_payments = self.env['agriculture.worker.payment'].search([
+                ('worker_id', '=', worker.id),
+                ('operation_id', '=', False),  # Əməliyyatla əlaqəsi yoxdur
+                ('state', '=', 'paid')
+            ])
+            total_amount += sum(payment.amount for payment in other_payments)
+            
+            worker.total_payments = total_amount
 
     def action_view_operations(self):
         """İşçinin əməliyyatlarını göstər"""
@@ -64,6 +91,30 @@ class AgricultureWorker(models.Model):
             'context': {'default_worker_id': self.id},
         }
 
+    def action_terminate_worker(self):
+        """İşçini işdən çıxar"""
+        self.ensure_one()
+        if self.state == 'active':
+            self.write({
+                'state': 'terminated',
+                'end_date': fields.Date.context_today(self)
+            })
+        return True
+        
+    def action_reactivate_worker(self):
+        """İşçini yenidən aktiv et"""
+        self.ensure_one()
+        if self.state == 'terminated':
+            self.write({
+                'state': 'active',
+                'end_date': False
+            })
+        return True
+    
+    def unlink(self):
+        """İşçi silinməsini tamamilə qadağan et"""
+        raise models.UserError("İşçilər silinə bilməz! Əgər işçini işdən çıxarmaq istəyirsinizsə, 'İşdən Çıxar' düyməsini istifadə edin.")
+
 
 class AgricultureWorkerPayment(models.Model):
     _name = 'agriculture.worker.payment'
@@ -71,7 +122,7 @@ class AgricultureWorkerPayment(models.Model):
     _order = 'date desc, id desc'
 
     name = fields.Char(string="Ödəniş", compute='_compute_name', store=True)
-    worker_id = fields.Many2one('agriculture.worker', string="İşçi", required=True, ondelete='cascade')
+    worker_id = fields.Many2one('agriculture.worker', string="İşçi", required=True, ondelete='cascade', domain="[('state', '=', 'active')]")
     operation_id = fields.Many2one('agriculture.operation', string="Əməliyyat", ondelete='set null', help="Bu ödəniş hansı əməliyyat üçün")
     date = fields.Date(string="Ödəniş Tarixi", required=True, default=fields.Date.context_today)
     amount = fields.Monetary(string="Məbləğ", required=True, currency_field='currency_id')

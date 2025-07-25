@@ -28,15 +28,7 @@ class AgricultureOperation(models.Model):
 
     name = fields.Char(string="Əməliyyat", compute='_compute_name', store=True)
     operation_type_id = fields.Many2one('agriculture.operation.type', string="Əməliyyat Növü", required=True)
-    operation_category = fields.Selection([
-        ('nutrition', 'Qidalandırma'),
-        ('irrigation', 'Suvarma'),
-        ('treatment', 'Müalicə'),
-        ('maintenance', 'Baxım'),
-        ('harvesting', 'Məhsul Yığımı'),
-        ('planting', 'Əkmə'),
-        ('other', 'Digər')
-    ], string="Əməliyyat Kateqoriyası", related='operation_type_id.category', store=True)
+    operation_category = fields.Selection(string="Əməliyyat Kateqoriyası", related='operation_type_id.category', store=True)
     date = fields.Datetime(string="Tarix və Vaxt", required=True, default=fields.Datetime.now)
     state = fields.Selection([
         ('draft', 'Qaralama'),
@@ -48,8 +40,9 @@ class AgricultureOperation(models.Model):
     row_ids = fields.Many2many('agriculture.row', string="Cərgələr", domain="[('plot_id', '=', plot_id)]")
     
     # İşçi məlumatları
-    worker_ids = fields.Many2many('agriculture.worker', string="İşçilər")
-    worker_cost = fields.Monetary(string="İşçi Xərcləri", compute='_compute_worker_cost', store=True, currency_field='currency_id')
+    worker_ids = fields.Many2many('agriculture.worker', string="İşçilər", domain="[('state', '=', 'active')]")
+    worker_cost = fields.Monetary(string="İşçi Xərcləri", currency_field='currency_id', help="Bu əməliyyat üçün işçilərə verilən ümumi məbləğ")
+    worker_payment_ids = fields.One2many('agriculture.worker.payment', 'operation_id', string="İşçi Ödənişləri")
 
     # Ağac sayı və ağac başına hesablamalar
     total_trees = fields.Integer(string="Ümumi Ağac Sayı", compute='_compute_tree_stats', store=True)
@@ -109,12 +102,6 @@ class AgricultureOperation(models.Model):
                 operation.fertilizer_per_tree = fertilizer_qty / total_trees
             else:
                 operation.fertilizer_per_tree = 0.0
-
-    @api.depends('worker_ids', 'worker_ids.daily_wage')
-    def _compute_worker_cost(self):
-        """İşçi xərclərini hesabla"""
-        for operation in self:
-            operation.worker_cost = sum(worker.daily_wage for worker in operation.worker_ids)
 
     @api.onchange('operation_type_id')
     def _onchange_operation_type_id(self):
@@ -198,10 +185,10 @@ class AgricultureOperation(models.Model):
     
     def _create_worker_expenses(self):
         """İşçi xərclərini işçi ödənişinə əlavə et"""
-        if not self.worker_ids or self.worker_cost <= 0:
+        if not self.worker_ids or not self.worker_cost or self.worker_cost <= 0:
             return
             
-        # Hər işçi üçün ödəniş yaradırıq
+        # Hər işçi üçün ödəniş yaradırıq - siz yazdığınız məbləği işçilər arasında bölürük
         worker_count = len(self.worker_ids)
         cost_per_worker = self.worker_cost / worker_count
         
@@ -209,6 +196,7 @@ class AgricultureOperation(models.Model):
             # İşçi üçün payment yaradırıq  
             self.env['agriculture.worker.payment'].create({
                 'worker_id': worker.id,
+                'operation_id': self.id,  # Əməliyyat ID-ni əlavə edirik
                 'date': self.date.date() if self.date else fields.Date.context_today(self),
                 'amount': cost_per_worker,
                 'description': f"{self.operation_type_id.name} əməliyyatı üçün iş haqqı (Əməliyyat: {self.name})",
@@ -222,6 +210,48 @@ class AgricultureOperation(models.Model):
     def action_draft(self):
         """Əməliyyatı qaralama vəziyyətinə qaytar"""
         self.write({'state': 'draft'})
+    
+    @api.model
+    def create(self, vals):
+        """Yeni əməliyyat yaradılanda"""
+        operation = super().create(vals)
+        
+        # Worker cost daxil edilibsə və işçilər seçilibsə, payment yarat
+        if operation.worker_cost and operation.worker_cost > 0 and operation.worker_ids:
+            operation._create_worker_expenses()
+            
+        return operation
+
+    def write(self, vals):
+        """Əməliyyat yenilənəndə"""
+        # Köhnə məlumatları saxla
+        old_data = {}
+        for record in self:
+            old_data[record.id] = {
+                'worker_cost': record.worker_cost,
+                'worker_ids': record.worker_ids.ids
+            }
+        
+        res = super().write(vals)
+        
+        # Worker cost və ya işçilər dəyişibsə
+        for record in self:
+            old_record = old_data[record.id]
+            cost_changed = 'worker_cost' in vals and record.worker_cost != old_record['worker_cost']
+            workers_changed = 'worker_ids' in vals and record.worker_ids.ids != old_record['worker_ids']
+            
+            if cost_changed or workers_changed:
+                # Köhnə payment-ləri sil (yalnız bu əməliyyat üçün yaradılmış)
+                old_payments = self.env['agriculture.worker.payment'].search([
+                    ('operation_id', '=', record.id)
+                ])
+                old_payments.unlink()
+                
+                # Yeni payment-lər yarat
+                if record.worker_cost and record.worker_cost > 0 and record.worker_ids:
+                    record._create_worker_expenses()
+        
+        return res
         
     def action_create_purchase_order(self):
         """Lazım olan məhsullar üçün Purchase Order yarat"""

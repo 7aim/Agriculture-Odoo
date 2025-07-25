@@ -2,7 +2,7 @@
     'name': "Kənd Təsərrüfatı İdarəetməsi",
 
     'author': "Aim",
-    'website': "https://www.github.com/7aim/odoo_custom_addons/agriculture",
+    'website': "https://www.github.com/7aim/Agriculture-Odoo",
     'category': 'Industries',
     'version': '18.0.2.0.0',
     'depends': ['base', 'stock', 'purchase'],  

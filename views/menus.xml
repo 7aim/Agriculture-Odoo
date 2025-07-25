@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+    <!-- Kənd Təsərrüfatı Menyusu -->
         <menuitem
             id="menu_agriculture_root"
             name="Kənd Təsərrüfatı"
@@ -13,7 +14,7 @@
             parent="menu_agriculture_root"
             sequence="1"/>
 
-        <!-- Sahələr Action və Menyu -->
+    <!-- Sahələr Action və Menyu -->
         <record id="action_agriculture_plot" model="ir.actions.act_window">
             <field name="name">Sahələr</field>
             <field name="res_model">agriculture.plot</field>
@@ -27,13 +28,13 @@
             action="action_agriculture_plot"
             sequence="10"/>
 
-        <!-- Cərgələr Action və Menyu -->
+    <!-- Cərgələr Action və Menyu -->
         <record id="action_agriculture_row" model="ir.actions.act_window">
             <field name="name">Cərgələr</field>
             <field name="res_model">agriculture.row</field>
             <field name="view_mode">list,form</field>
         </record>
-        
+
         <menuitem
             id="menu_agriculture_row"
             name="Cərgələr"
@@ -41,7 +42,7 @@
             action="action_agriculture_row"
             sequence="20"/>
 
-        <!-- Ağaclar Action və Menyu -->
+    <!-- Ağaclar Action və Menyu -->
         <record id="action_agriculture_tree" model="ir.actions.act_window">
             <field name="name">Ağaclar</field>
             <field name="res_model">agriculture.tree</field>
@@ -55,7 +56,7 @@
             action="action_agriculture_tree"
             sequence="30"/>
 
-        <!-- Toplu Cərgə Yaratma Action və Menyu -->
+    <!-- Toplu Cərgə Yaratma Action və Menyu -->
         <record id="action_bulk_row_creator" model="ir.actions.act_window">
             <field name="name">Toplu Cərgə Yaratma</field>
             <field name="res_model">agriculture.bulk.row.creator</field>
@@ -70,14 +71,14 @@
             action="action_bulk_row_creator"
             sequence="35"/>
 
-        <!-- İşçilər Menyusu -->
+    <!-- İşçilər Menyusu -->
         <menuitem
             id="menu_agriculture_workers"
             name="İşçilər"
             parent="menu_agriculture_root"
             sequence="3"/>
 
-        <!-- İşçilər Action və Menyu -->
+    <!-- İşçilər Action və Menyu -->
         <record id="action_agriculture_worker" model="ir.actions.act_window">
             <field name="name">İşçilər</field>
             <field name="res_model">agriculture.worker</field>
@@ -91,7 +92,7 @@
             action="action_agriculture_worker"
             sequence="10"/>
 
-        <!-- İşçi Ödənişləri Action və Menyu -->
+    <!-- İşçi Ödənişləri Action və Menyu -->
         <record id="action_agriculture_worker_payment" model="ir.actions.act_window">
             <field name="name">İşçi Ödənişləri</field>
             <field name="res_model">agriculture.worker.payment</field>
@@ -105,14 +106,14 @@
             action="action_agriculture_worker_payment"
             sequence="20"/>
 
-        <!-- Əməliyyatlar Menyusu -->
+    <!-- Əməliyyatlar Menyusu -->
         <menuitem
             id="menu_agriculture_operations"
             name="Əməliyyatlar"
             parent="menu_agriculture_root"
             sequence="4"/>
 
-        <!-- Əməliyyatlar Action və Menyu -->
+    <!-- Əməliyyatlar Action və Menyu -->
         <record id="action_agriculture_operation" model="ir.actions.act_window">
             <field name="name">Əməliyyatlar</field>
             <field name="res_model">agriculture.operation</field>
@@ -126,7 +127,7 @@
             action="action_agriculture_operation"
             sequence="10"/>
 
-        <!-- Əməliyyat Növləri Action və Menyu -->
+    <!-- Əməliyyat Növləri Action və Menyu -->
         <record id="action_agriculture_operation_type" model="ir.actions.act_window">
             <field name="name">Əməliyyat Növləri</field>
             <field name="res_model">agriculture.operation.type</field>
@@ -140,7 +141,7 @@
             action="action_agriculture_operation_type"
             sequence="20"/>
 
-        <!-- Məhsullar Action və Menyu -->
+    <!-- Məhsullar Action və Menyu -->
         <record id="action_agriculture_product" model="ir.actions.act_window">
             <field name="name">Məhsullar</field>
             <field name="res_model">product.product</field>
@@ -151,7 +152,7 @@
             }</field>
         </record>
 
-        <!-- Məhsullar Menyusu -->
+    <!-- Məhsullar Menyusu -->
         <menuitem
             id="menu_agriculture_product"
             name="Məhsullar"
@@ -159,14 +160,14 @@
             action="action_agriculture_product"
             sequence="5"/>
 
-        <!-- Hesabatlar Menyusu -->
+    <!-- Hesabatlar Menyusu -->
         <menuitem
             id="menu_agriculture_reports"
             name="Hesabatlar"
             parent="menu_agriculture_root"
             sequence="6"/>
 
-        <!-- Pivot Menularını Saxla -->
+    <!-- Pivot Menularını Saxla -->
         <menuitem
             id="menu_agriculture_operation_pivot"
             name="Əməliyyat Hesabatı"
