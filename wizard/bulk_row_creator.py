@@ -76,3 +76,4 @@ class BulkRowCreator(models.TransientModel):
                 'type': 'success',
             }
         }
+    
